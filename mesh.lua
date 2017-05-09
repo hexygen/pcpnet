@@ -27,23 +27,23 @@ function M.readOff(filename)
 
 
   -- Allocate tensor for vertices:
-  local v = torch.Tensor(nv, 3)
+  local v = torch.FloatTensor(nv, 3)
   -- Read vertices
   for i = 1, nv do
 
     local x, y, z = file:read('*n', '*n', '*n')
-    v[{i, {}}] = torch.Tensor({x, y, z})
+    v[{i, {}}] = torch.FloatTensor({x, y, z})
 
   end
 
   -- Allocate tensor for vertices:
-  local f = torch.Tensor(nf, 3)
+  local f = torch.FloatTensor(nf, 3)
   -- Read faces
   for i = 1, nf do
 
     -- Discard first number in the row (number of vertices in face, always 3):
     local _, x, y, z = file:read('*n', '*n', '*n', '*n')
-    f[{i, {}}] = torch.Tensor({x, y, z})
+    f[{i, {}}] = torch.FloatTensor({x, y, z})
 
   end
 
@@ -80,7 +80,7 @@ function M.readXYZ(filename)
   nv = nv / 3
 
   -- Allocate tensor for vertices:
-  local v = torch.Tensor(nv, 3)
+  local v = torch.FloatTensor(nv, 3)
 
   -- Fill tensor with data from string:
   local pos = 1

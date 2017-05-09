@@ -21,8 +21,8 @@ end
 -- max = maximum number to permute from
 function M.randperm_partial(n, k, max)
 
-  local rp = torch.Tensor(n, k)
-  local col = torch.Tensor(n, 1);
+  local rp = torch.FloatTensor(n, k)
+  local col = torch.FloatTensor(n, 1);
   -- Draw first column (no constraints):
   rp:select(2, 1):rand(n):mul(max):ceil()
   

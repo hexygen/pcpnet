@@ -67,22 +67,22 @@ function M.hough(data, k, num_of_samples, hist_size)
 --  end
 
 
-  local hough = torch.Tensor(n, hs2)
-  local pcas = torch.Tensor(n, 3, 3)
+  local hough = torch.FloatTensor(n, hs2)
+  local pcas = torch.FloatTensor(n, 3, 3)
 
-  local normals = torch.Tensor(num_of_samples, 2)
+  local normals = torch.FloatTensor(num_of_samples, 2)
   -- example normal = 0.1761    0.4402    0.8805  
   normals:select(2, 1):fill(0.1761)
   normals:select(2, 2):fill(0.4402)
 --  normals:select(2, 3):fill(0.8805)
 
-  local v1 = torch.Tensor(k, 3)
-  local v2 = torch.Tensor(k, 3)
-  local v3 = torch.Tensor(k, 3)
+  local v1 = torch.FloatTensor(k, 3)
+  local v2 = torch.FloatTensor(k, 3)
+  local v3 = torch.FloatTensor(k, 3)
 
-  local di = torch.Tensor(k, 3)
-  local di_rot = torch.Tensor(k, 3)
-  local normals_rot = torch.Tensor(num_of_samples, 2)
+  local di = torch.FloatTensor(k, 3)
+  local di_rot = torch.FloatTensor(k, 3)
+  local normals_rot = torch.FloatTensor(num_of_samples, 2)
 
   local pca1u, pca1s, pca1v
   local pca2u, pca2s, pca2v
@@ -261,7 +261,7 @@ function M.postprocess_normals(normals, pcas)
   -- Compute 3D normals from 2D normals:
   local norms_2d = torch.norm(normals, 2, 2):pow(2):squeeze()
   -- Calculate 1 - norm_2d:
-  local normals_3 = torch.Tensor(n, 1)
+  local normals_3 = torch.FloatTensor(n, 1)
   normals_3:fill(1):add(-1, norms_2d):clamp(0, 1):sqrt()
 
   normals = torch.cat(normals, normals_3, 2)

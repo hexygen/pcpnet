@@ -85,7 +85,7 @@ print('Substracted mean in ' .. sys.toc() .. ' seconds.')
 
 ------------------------------------------------------------------------
 ---- Evaluate deep net:
-hnet.evaluate(hough, batch_size)
+local normals = hnet.evaluate(hough, model, batch_size)
 
 -- Transform 2D output of deep net to 3D normals:
 Hough.postprocess_normals(normals, pcas)

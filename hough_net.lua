@@ -3,7 +3,7 @@ require 'sys'
 
 local M={};
 
-function M.evaluate(hough, batch_size)
+function M.evaluate(hough, model, batch_size)
 
   local n = hough:size(1)
   -- Make sure hough data is cuda:

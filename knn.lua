@@ -17,7 +17,7 @@ function M.searchknn(data, k)
 
   -- Allocate tensors for results:
   local knn = torch.LongTensor(n, k)
-  local dist = torch.Tensor(n, k)
+  local dist = torch.FloatTensor(n, k)
   dist:fill(10000)
 
 
@@ -35,8 +35,8 @@ function M.searchknn(data, k)
   dist[1] = sort1[{{1, k}}]
   knn[1] = si1[{{1, k}}]
 
-  local band = torch.Tensor(k*2, d)
-  local di = torch.Tensor(k*2, 1)
+  local band = torch.FloatTensor(k*2, d)
+  local di = torch.FloatTensor(k*2, 1)
 
   -- For the next rows, find nearest neighbors in a band around them 
   -- according to distance from first point:
