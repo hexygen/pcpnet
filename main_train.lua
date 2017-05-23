@@ -15,8 +15,8 @@ local k = 100
 local num_of_samples = 1000
 local hist_size = 33
 local batch_size = 256
-local epochs = 20
-local train_ratio = 0.9
+local epochs = 100
+local train_ratio = 0.85
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'

@@ -166,8 +166,8 @@ function M.train(samples, gt, model, batch_size, epochs)
 
     end
 
-    if (math.fmod(epoch, 5) == 0) then
-      optimState.learningRate = optimState.learningRate / 2
+    if (math.fmod(epoch, 3) == 0) then
+      optimState.learningRate = optimState.learningRate * 0.8
     end
     
 
