@@ -253,6 +253,26 @@ function M.pca_weighted(x, weights)
   return v
 end
 
+-- Translate the ground truth 3D normal to a 2D normal for the neural net
+-- by multiplying by PCA:
+function M.preprocess_normals(normals, pcas)
+  local n = normals:size(1)
+  
+  ---- Rotate by pcas:
+  -- Adding a dimension for batch operation:
+  normals:resize(n, 3, 1)
+
+  -- Batch multiplying pcas matrices with normal vectors:
+  normals = torch.bmm(pcas:float(), normals)
+
+  normals:resize(n, 3)
+  
+  -- 2D normal is just the first 2 coordinates:
+  normals = normals[{{}, {1,2}}]
+
+
+  return normals
+end
 
 -- Translate the results of the deep net to a 3D normal by 
 -- computing the third coordinate and applying pca to each row
@@ -276,7 +296,7 @@ function M.postprocess_normals(normals, pcas)
   -- Batch multiplying matrices with normal vectors:
   -- (note: pcas should be inverted and transposed. Since these are 
   --        rotation matrices the inverse cancels the transpose)
-  normals = torch.bmm(normals:double(), pcas)
+  normals = torch.bmm(normals, pcas:float())
 
   normals:resize(n, 3)
 

@@ -14,7 +14,7 @@ local hnet = require('hough_net')
 local k = 100
 local num_of_samples = 1000
 local hist_size = 33
-local batch_size = 1000
+local batch_size = 16
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
@@ -23,12 +23,15 @@ local out_path = 'data/out/'
 local model_path = 'data/model_1s/'
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
-local output_filename = base_path .. out_path .. shape_name .. '_normals.xyz'
+local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
+local output_filename = base_path .. out_path .. shape_name .. '_normals_mynet.xyz'
 
 --------------------------------------------------------------------------
 ---- Read shape:
 local v = Mesh.readXYZ(xyz_filename)
 local n = v:size(1)
+---- Read ground truth data:
+local gt = Mesh.readXYZ(gt_filename)
 
 --------------------------------------------------------------------------
 ---- Load or compute Hough transform and PCA for each point on the shape:
@@ -57,6 +60,8 @@ end
 sys.tic()
 
 local model_name = base_path .. model_path .. 'net.t7'
+-- Replace with my trained model:
+--model_name = base_path .. out_path .. '151A_100k_0005_model.t7'
 local mean_name = base_path .. model_path .. 'mean.t7'
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)
