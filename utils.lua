@@ -36,7 +36,7 @@ function M.randperm_partial(n, k, max)
     mask = torch.eq(prev, col_expand):sum(2)
     
     while mask:any() do
-      local new_rand = torch.rand(mask:sum()):mul(max):ceil()
+      local new_rand = torch.rand(mask:sum()):mul(max):ceil():float()
       col:maskedCopy(mask, new_rand)
     
       -- Update mask (col_expand is a view on col so it is updated):

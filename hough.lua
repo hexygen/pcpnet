@@ -124,7 +124,7 @@ function M.hough(data, k, num_of_samples, hist_size)
     local normals = v2:cross(v3)
     
     -- Reverse normals if their last component is negative:
-    local ind = torch.gt(normals[{{}, {3}}], 0):double()
+    local ind = torch.gt(normals[{{}, {3}}], 0):float()
     -- change ind from [0, 1] to [-1, 1] to multiply normals:
     ind:add(-0.5):mul(2)
     normals:cmul(ind:expandAs(normals))
