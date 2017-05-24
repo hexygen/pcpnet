@@ -26,7 +26,8 @@ function M.searchknn(data, k)
 
   -- First, search for nearest neighbors of first point:
   local diff_1 = data - data[1]:repeatTensor(1, n)
-  local d1 = diff_1:pow(2):sum(2):squeeze()
+  local d1 = torch.norm(diff_1, 2, 2):squeeze()
+  --local d1 = diff_1:pow(2):sum(2):squeeze()
 
   -- sort distances to first point:
   local sort1, si1 = d1:sort()
@@ -53,22 +54,24 @@ function M.searchknn(data, k)
 
     while not done do
 
---      local low_band = si1[{{start_low_band, end_low_band}}]
---      local high_band = si1[{{start_high_band, end_high_band}}]
---      local band_ind = low_band:cat(high_band, 1)
---      local band = data:index(1, band_ind)
+      local low_band = si1[{{start_low_band, end_low_band}}]
+      local high_band = si1[{{start_high_band, end_high_band}}]
+      local band_ind = low_band:cat(high_band, 1)
+      band:index(data, 1, band_ind)
 
-      -- Four rows in one - perhaps it is more efficient?
-      band:index(data, 1, 
-          si1[{{start_low_band, end_low_band}}]:cat(si1[{{start_high_band, end_high_band}}], 1))
+--      -- Four rows in one - perhaps it is more efficient?
+--      band:index(data, 1, 
+--          si1[{{start_low_band, end_low_band}}]:cat(si1[{{start_high_band, end_high_band}}], 1))
 
       band:add(-1, data[ii]:view(1, d):expandAs(band))
-      di:sum(band:cmul(band), 2) -- cmul(self) is faster than pow(2)!
+      di = torch.norm(band, 2, 2)
+      --di:sum(band:cmul(band), 2) -- cmul(self) is faster than pow(2)!
 
       dist_k, ind_k = di:squeeze():topk(k)
       local max_val = dist_k:max()
       dist[ii] = dist_k
-      knn[ii] = si1:index(1, ind_k)
+      -- Put si1(band_ind(ind_k)) into knn[ii]:
+      knn[ii]:index(band_ind, 1, ind_k)
 
       -- Check whether bandwidth has to grow:
       local d1_min = d1[si1[start_low_band]]
@@ -81,10 +84,10 @@ function M.searchknn(data, k)
       else
         -- It is possible that points outside the band are closer - check bands outside:
         bandwidth = bandwidth*2
-        end_low_band = math.max(1, start_low_band-1)
+        --end_low_band = math.max(1, start_low_band-1)
         start_low_band = math.max(1, i-bandwidth+1) -- using new bandwidth
 
-        start_high_band = math.min(n, end_high_band+1)
+        --start_high_band = math.min(n, end_high_band+1)
         end_high_band = math.min(n, i+bandwidth-1) -- using new bandwidth
 
 --        print('i = ' .. i .. ', time = ' .. sys.toc() .. ', bandwidth = ' .. bandwidth .. '\n')
