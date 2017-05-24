@@ -14,7 +14,7 @@ local hnet = require('hough_net')
 local k = 100
 local num_of_samples = 1000
 local hist_size = 33
-local batch_size = 16
+local batch_size = 256
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
@@ -61,7 +61,7 @@ sys.tic()
 
 local model_name = base_path .. model_path .. 'net.t7'
 -- Replace with my trained model:
---model_name = base_path .. out_path .. '151A_100k_0005_model.t7'
+model_name = base_path .. out_path .. '151A_100k_0005_model_no_dropout.t7'
 local mean_name = base_path .. model_path .. 'mean.t7'
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)
@@ -93,7 +93,7 @@ print('Substracted mean in ' .. sys.toc() .. ' seconds.')
 local normals = hnet.evaluate(hough, model, batch_size)
 
 -- Transform 2D output of deep net to 3D normals:
-Hough.postprocess_normals(normals, pcas)
+normals = Hough.postprocess_normals(normals, pcas)
 
 -- Write output file:
 Mesh.writeXYZ(output_filename, v, normals)
