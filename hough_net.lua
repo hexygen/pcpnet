@@ -56,13 +56,13 @@ function M.getModel()
 
   local seq2 = nn.Sequential()
 
-  seq2:add(nn.Dropout())
+  --seq2:add(nn.Dropout())
   seq2:add(nn.Linear(3456, 2048))
   seq2:add(cudnn.ReLU())
-  seq2:add(nn.Dropout())
+  --seq2:add(nn.Dropout())
   seq2:add(nn.Linear(2048, 1024))
   seq2:add(cudnn.ReLU())
-  seq2:add(nn.Dropout())
+  --seq2:add(nn.Dropout())
   seq2:add(nn.Linear(1024, 512))
   seq2:add(cudnn.ReLU())
   seq2:add(nn.Linear(512, 2))
@@ -90,7 +90,7 @@ function M.train(samples, gt, model, batch_size, epochs)
   -- Get model parameters:
   local params, gradParams = model:getParameters()
   -- Set optimization parameters:
-  local optimState = {learningRate = 0.0015}
+  local optimState = {learningRate = 0.0003}
 
   ---- Define the mean squared error crieterion:
   local criterion = nn.MSECriterion():cuda()
@@ -152,7 +152,8 @@ function M.train(samples, gt, model, batch_size, epochs)
         local dloss_doutputs = criterion:backward(outputs, gts)
         model:backward(inputs, dloss_doutputs)
 
-        print('Loss = ' .. loss)
+        out_norm = torch.sum(torch.norm(outputs, 2, 2))
+        print('Loss = ' .. loss .. ', Norm = ' .. out_norm)
 
         return loss, gradParams
       end

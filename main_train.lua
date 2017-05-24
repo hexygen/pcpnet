@@ -20,14 +20,14 @@ local train_ratio = 0.85
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
-local shape_name = '151A_100k_0005'
+local shape_name = 'cube100k'
 local out_path = 'data/out/'
 local model_path = 'data/model_1s/'
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
 local output_filename = base_path .. out_path .. shape_name .. '_normals.xyz'
-local model_filename = base_path .. out_path .. shape_name .. '_model.t7'
+local model_filename = base_path .. out_path .. shape_name .. '_model_no_dropout.t7'
 local mean_filename = base_path .. out_path .. shape_name .. '_mean.t7'
 
 --------------------------------------------------------------------------

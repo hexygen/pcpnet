@@ -18,7 +18,7 @@ local batch_size = 256
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
-local shape_name = '151A_100k_0005'
+local shape_name = 'cube100k'
 local out_path = 'data/out/'
 local model_path = 'data/model_1s/'
 
