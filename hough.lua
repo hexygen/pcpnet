@@ -1,3 +1,5 @@
+-- local dbg = require("debugger") -- https://github.com/slembcke/debugger.lua
+
 require 'cutorch'
 require 'sys'
 local utils = require('utils')
@@ -101,7 +103,9 @@ function M.hough(data, k, num_of_samples, hist_size)
       pca1u, pca1s, pca1v = M.pca(di)
     end
     
-
+    -- if i==675 then
+    --   dbg()
+    -- end
 
     -- Rotate data using pca (result goes into di_rot) 
     -- (transposed since the order is reversed):
@@ -131,6 +135,10 @@ function M.hough(data, k, num_of_samples, hist_size)
     -- Normalize normals:
     normals:cdiv(normals:norm(2, 2):expandAs(normals))
 
+    -- if i==675 then
+    --   dbg()
+    -- end
+
     -- Project on normals plane by removing third coordinate:
     normals:select(2, 3):fill(0)
     --normals = normals[{{}, {1,2}}]
@@ -142,6 +150,10 @@ function M.hough(data, k, num_of_samples, hist_size)
     else
       pca2u, pca2s, pca2v = M.pca(normals)
     end
+
+    -- if i==675 then
+    --   dbg()
+    -- end
 
     -- Rotate normals by second pca:
     --normals_rot:mm(normals, pca2u:t())
@@ -267,6 +279,8 @@ function M.preprocess_normals(normals, pcas)
   --normals:resize(n, 3, 1)
   normals:resize(n, 1, 3)
 
+  -- dbg()
+
   -- Batch multiplying pcas matrices with normal vectors:
   --normals = torch.bmm(pcas:float(), normals)
   normals = torch.bmm(normals, pcas:float())
@@ -275,7 +289,8 @@ function M.preprocess_normals(normals, pcas)
   
   normals = M.orient_normals(normals)
 
-  
+  -- dbg()
+
   -- 2D normal is just the first 2 coordinates:
   normals = normals[{{}, {1,2}}]
 

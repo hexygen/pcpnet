@@ -20,6 +20,7 @@ local train_ratio = 0.85
 local learning_rate = 0.001
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+-- local base_path = '../'
 local shape_path = 'data/shapes/'
 local shape_name = 'cube100k'
 local out_path = 'data/out/'

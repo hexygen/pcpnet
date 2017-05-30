@@ -17,11 +17,13 @@ local hist_size = 33
 local batch_size = 256
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+-- local base_path = '../'
 local shape_path = 'data/shapes/'
 --local shape_name = '151A_100k_0005'
 local shape_name = 'cube100k'
 local out_path = 'data/out/'
-local model_path = 'data/model_1s/'
+-- local model_path = 'data/model_1s/'
+local model_path = 'data/out/'
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
