@@ -90,7 +90,7 @@ function M.train(samples, gt, model, batch_size, epochs)
   -- Get model parameters:
   local params, gradParams = model:getParameters()
   -- Set optimization parameters:
-  local optimState = {learningRate = 0.0003}
+  local optimState = {learningRate = 0.002}
 
   ---- Define the mean squared error crieterion:
   local criterion = nn.MSECriterion():cuda()

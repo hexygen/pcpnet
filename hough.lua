@@ -70,11 +70,11 @@ function M.hough(data, k, num_of_samples, hist_size)
   local hough = torch.FloatTensor(n, hs2)
   local pcas = torch.FloatTensor(n, 3, 3)
 
-  local normals = torch.FloatTensor(num_of_samples, 2)
-  -- example normal = 0.1761    0.4402    0.8805  
-  normals:select(2, 1):fill(0.1761)
-  normals:select(2, 2):fill(0.4402)
---  normals:select(2, 3):fill(0.8805)
+--  local normals = torch.FloatTensor(num_of_samples, 2)
+--  -- example normal = 0.1761    0.4402    0.8805  
+--  normals:select(2, 1):fill(0.1761)
+--  normals:select(2, 2):fill(0.4402)
+----  normals:select(2, 3):fill(0.8805)
 
   local v1 = torch.FloatTensor(k, 3)
   local v2 = torch.FloatTensor(k, 3)
@@ -82,7 +82,7 @@ function M.hough(data, k, num_of_samples, hist_size)
 
   local di = torch.FloatTensor(k, 3)
   local di_rot = torch.FloatTensor(k, 3)
-  local normals_rot = torch.FloatTensor(num_of_samples, 2)
+  local normals_rot = torch.FloatTensor(num_of_samples, 3)
 
   local pca1u, pca1s, pca1v
   local pca2u, pca2s, pca2v
@@ -103,7 +103,8 @@ function M.hough(data, k, num_of_samples, hist_size)
     
 
 
-    -- Rotate data using pca (result goes into di) (transposed since the order is reversed):
+    -- Rotate data using pca (result goes into di_rot) 
+    -- (transposed since the order is reversed):
     di_rot:mm(di, pca1u:t())
 
     -- Get samples of random triangles:
@@ -124,17 +125,16 @@ function M.hough(data, k, num_of_samples, hist_size)
     local normals = v2:cross(v3)
     
     -- Reverse normals if their last component is negative:
-    local ind = torch.gt(normals[{{}, {3}}], 0):float()
-    -- change ind from [0, 1] to [-1, 1] to multiply normals:
-    ind:add(-0.5):mul(2)
-    normals:cmul(ind:expandAs(normals))
+    normals = M.orient_normals(normals)
 
     -- Normalize normals:
     normals:cdiv(normals:norm(2, 2):expandAs(normals))
 
-    normals = normals[{{}, {1,2}}]
+    -- Project on normals plane by removing third coordinate:
+    normals:select(2, 3):fill(0)
+    --normals = normals[{{}, {1,2}}]
 
-    -- Compute 2D PCA, of the two first coordinates of the normal:
+    -- Compute second PCA, of the rotated normals:
     -- (note: output values are initialized on first call and then reused)
     if (pca2u and pca2s and pca2v) then
       M.pca(normals, pca2u, pca2s, pca2v)
@@ -142,17 +142,18 @@ function M.hough(data, k, num_of_samples, hist_size)
       pca2u, pca2s, pca2v = M.pca(normals)
     end
 
-    -- Rotate normals by 2D pca:
+    -- Rotate normals by second pca:
     normals_rot:mm(normals, pca2u:t())
     
     -- Update pca matrix so the rotation back would be correct:
     -- (note: pca2u comes before, unless they are trnasposed as used above)
-    pca1u[{{1,2}, {1,2}}] = torch.mm(pca2u, pca1u[{{1,2}, {1,2}}])
+    pca1u = torch.mm(pca2u, pca1u)
+    --pca1u[{{1,2}, {1,2}}] = torch.mm(pca2u, pca1u[{{1,2}, {1,2}}])
 
     -- Create histogram image by quantizing results:
     -- Histogram image is hist_size*hist_size cells:
-    local c1 = normals:select(2, 1)
-    local c2 = normals:select(2, 2)
+    local c1 = normals_rot:select(2, 1)
+    local c2 = normals_rot:select(2, 2)
     -- c = ((c+1)/2) * hist_size:
     c1:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
     c2:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
@@ -267,6 +268,9 @@ function M.preprocess_normals(normals, pcas)
 
   normals:resize(n, 3)
   
+  normals = M.orient_normals(normals)
+
+  
   -- 2D normal is just the first 2 coordinates:
   normals = normals[{{}, {1,2}}]
 
@@ -300,8 +304,24 @@ function M.postprocess_normals(normals, pcas)
 
   normals:resize(n, 3)
 
+  normals = M.orient_normals(normals)
+
   print('Rotated normals in ' .. sys.toc() .. ' seconds.')
 
+  return normals
+end
+
+
+-- Orient normals such that the last component is positive.
+-- This should be done after every PCA rotation to ensure that we are not losing information:
+function M.orient_normals(normals)
+  -- Reverse normals if their last component is negative:
+  local ind = torch.gt(normals[{{}, {3}}], 0):float()
+  -- change ind from [0, 1] to [-1, 1] to multiply normals:
+  ind:add(-0.5):mul(2)
+  -- Multiply by -1 where last component was negative:
+  normals:cmul(ind:expandAs(normals))
+  
   return normals
 end
 

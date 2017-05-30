@@ -18,6 +18,7 @@ local batch_size = 256
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
+--local shape_name = '151A_100k_0005'
 local shape_name = 'cube100k'
 local out_path = 'data/out/'
 local model_path = 'data/model_1s/'
@@ -54,15 +55,16 @@ else
 end
 
 
-
+  
 ------------------------------------------------------------------------
 ---- Load models of deep net:
 sys.tic()
 
 local model_name = base_path .. model_path .. 'net.t7'
 -- Replace with my trained model:
-model_name = base_path .. out_path .. '151A_100k_0005_model_no_dropout.t7'
+model_name = base_path .. out_path .. 'cube100k_model.t7'
 local mean_name = base_path .. model_path .. 'mean.t7'
+mean_name = base_path .. out_path .. 'cube100k_mean.t7'
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)
 
