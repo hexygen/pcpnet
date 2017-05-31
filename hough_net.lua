@@ -56,13 +56,13 @@ function M.getModel()
 
   local seq2 = nn.Sequential()
 
-  --seq2:add(nn.Dropout())
+  seq2:add(nn.Dropout())
   seq2:add(nn.Linear(3456, 2048))
   seq2:add(cudnn.ReLU())
-  --seq2:add(nn.Dropout())
+  seq2:add(nn.Dropout())
   seq2:add(nn.Linear(2048, 1024))
   seq2:add(cudnn.ReLU())
-  --seq2:add(nn.Dropout())
+  seq2:add(nn.Dropout())
   seq2:add(nn.Linear(1024, 512))
   seq2:add(cudnn.ReLU())
   seq2:add(nn.Linear(512, 2))
@@ -77,7 +77,7 @@ function M.getModel()
 end
 
 -- Trains the given model using the samples and the ground truth data.
-function M.train(samples, gt, model, batch_size, epochs)
+function M.train(samples, gt, model, batch_size, epochs, learning_rate)
 
   -- Just in case:
   samples = samples:float()
@@ -90,7 +90,7 @@ function M.train(samples, gt, model, batch_size, epochs)
   -- Get model parameters:
   local params, gradParams = model:getParameters()
   -- Set optimization parameters:
-  local optimState = {learningRate = 0.002}
+  local optimState = {learningRate = learning_rate}
 
   ---- Define the mean squared error crieterion:
   local criterion = nn.MSECriterion():cuda()
@@ -153,7 +153,10 @@ function M.train(samples, gt, model, batch_size, epochs)
         model:backward(inputs, dloss_doutputs)
 
         out_norm = torch.sum(torch.norm(outputs, 2, 2))
-        print('Loss = ' .. loss .. ', Norm = ' .. out_norm)
+        if (math.fmod(b, 5) == 0) then
+          print('Loss = ' .. loss .. ', Norm = ' .. out_norm)
+        end
+        
 
         return loss, gradParams
       end
@@ -161,7 +164,7 @@ function M.train(samples, gt, model, batch_size, epochs)
       --- TODO: Check parameters for params optimState
       optim.sgd(feval, params, optimState)
 
-      if (math.fmod(b, 10) == 0) then
+      if (math.fmod(b, 100) == 0) then
         print('Training: epoch '.. epoch .. ' batch ' .. b .. ' points = ' .. (b*batch_size))
       end
 

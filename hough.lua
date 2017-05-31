@@ -105,7 +105,8 @@ function M.hough(data, k, num_of_samples, hist_size)
 
     -- Rotate data using pca (result goes into di_rot) 
     -- (transposed since the order is reversed):
-    di_rot:mm(di, pca1u:t())
+    --di_rot:mm(di, pca1u:t())
+    di_rot:mm(di, pca1u)
 
     -- Get samples of random triangles:
     local ri = get_randperm(num_of_samples, k)
@@ -143,7 +144,8 @@ function M.hough(data, k, num_of_samples, hist_size)
     end
 
     -- Rotate normals by second pca:
-    normals_rot:mm(normals, pca2u:t())
+    --normals_rot:mm(normals, pca2u:t())
+    normals_rot:mm(normals, pca2u)
     
     -- Update pca matrix so the rotation back would be correct:
     -- (note: pca2u comes before, unless they are trnasposed as used above)
@@ -261,10 +263,12 @@ function M.preprocess_normals(normals, pcas)
   
   ---- Rotate by pcas:
   -- Adding a dimension for batch operation:
-  normals:resize(n, 3, 1)
+  --normals:resize(n, 3, 1)
+  normals:resize(n, 1, 3)
 
   -- Batch multiplying pcas matrices with normal vectors:
-  normals = torch.bmm(pcas:float(), normals)
+  --normals = torch.bmm(pcas:float(), normals)
+  normals = torch.bmm(normals, pcas:float())
 
   normals:resize(n, 3)
   
@@ -295,13 +299,15 @@ function M.postprocess_normals(normals, pcas)
   print('Rotating normals...')
 
   -- Adding a dimension for batch operation:
-  normals:resize(n, 1, 3)
+  --normals:resize(n, 1, 3)
+  normals:resize(n, 3, 1)
 
   -- Batch multiplying matrices with normal vectors:
   -- (note: pcas should be inverted and transposed. Since these are 
   --        rotation matrices the inverse cancels the transpose)
-  normals = torch.bmm(normals, pcas:float())
-
+  --normals = torch.bmm(normals, pcas:float())
+  normals = torch.bmm(pcas:float(), normals)
+  
   normals:resize(n, 3)
 
   normals = M.orient_normals(normals)

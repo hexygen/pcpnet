@@ -14,9 +14,10 @@ local hnet = require('hough_net')
 local k = 100
 local num_of_samples = 1000
 local hist_size = 33
-local batch_size = 256
-local epochs = 100
+local batch_size = 64
+local epochs = 50
 local train_ratio = 0.85
+local learning_rate = 0.001
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
@@ -27,7 +28,7 @@ local model_path = 'data/model_1s/'
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
 local output_filename = base_path .. out_path .. shape_name .. '_normals.xyz'
-local model_filename = base_path .. out_path .. shape_name .. '_model_no_dropout.t7'
+local model_filename = base_path .. out_path .. shape_name .. '_model.t7'
 local mean_filename = base_path .. out_path .. shape_name .. '_mean.t7'
 
 --------------------------------------------------------------------------
@@ -104,7 +105,7 @@ print('Initialized model in ' .. sys.toc() .. ' seconds.')
 ------------------------------------------------------------------------
 ---- Train deep net:
 sys.tic()
-model = hnet.train(hough_train, gt_train, model, batch_size, epochs)
+model = hnet.train(hough_train, gt_train, model, batch_size, epochs, learning_rate)
 
 print('Trained model in ' .. sys.toc() .. ' seconds.')
 sys.tic()
