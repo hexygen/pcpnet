@@ -64,6 +64,8 @@ sys.tic()
 
 -- Change input size: 1 input layer (channel), hist_size * hist_size image:
 hough = hough:reshape(hough:size(1), 1, hist_size, hist_size)
+-- normalize hough transform:
+hough:div(num_of_samples)
 
 -- Transform 3D ground truth normals to deep net 2D normals using PCAs:
 gt = Hough.preprocess_normals(gt_normals, pcas)

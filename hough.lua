@@ -149,7 +149,8 @@ function M.hough(data, k, num_of_samples, hist_size)
     
     -- Update pca matrix so the rotation back would be correct:
     -- (note: pca2u comes before, unless they are trnasposed as used above)
-    pca1u = torch.mm(pca2u, pca1u)
+    --pca1u = torch.mm(pca2u, pca1u)
+    pca1u = torch.mm(pca1u, pca2u)
     --pca1u[{{1,2}, {1,2}}] = torch.mm(pca2u, pca1u[{{1,2}, {1,2}}])
 
     -- Create histogram image by quantizing results:
