@@ -2,8 +2,8 @@ require 'torch'
 require 'math'
 require 'image'
 
-local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
--- local base_path = '../'
+-- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+local base_path = '../'
 local shape_path = 'data/shapes/'
 local shape_name = 'cube100k'
 local out_path = 'data/out/'
@@ -11,7 +11,11 @@ local vis_path = 'data/vis/'
 
 -- all of these points are on a plane far away from edges, so their hough transforms should have a single maximum at the origin
 -- except point 23043 which is almost exactly on a corner
-local point_inds = torch.FloatTensor({694,2240,675,2026,96438,3115,23043});
+-- local point_inds = torch.FloatTensor({694,2240,675,2026,96438,3115,23043});
+
+-- points on the edges, these should have the direction of largest variation aligned in the same way (due to the second pca)
+local point_inds = torch.FloatTensor({37323,4801,39338,80603,31404,63589});
+
 local num_of_samples = 1000
 local hough_vis_max = 10
 

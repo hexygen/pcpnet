@@ -22,12 +22,19 @@ local shape_path = 'data/shapes/'
 --local shape_name = '151A_100k_0005'
 local shape_name = 'cube100k'
 local out_path = 'data/out/'
--- local model_path = 'data/model_1s/'
-local model_path = 'data/out/'
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
-local output_filename = base_path .. out_path .. shape_name .. '_normals_mynet.xyz'
+
+-- boulch model
+local model_name = base_path .. 'data/model_1s/net.t7'
+local mean_name = base_path .. 'data/model_1s/mean.t7'
+local output_filename = base_path .. out_path .. shape_name .. '_normals_boulch.xyz'
+
+-- -- our model
+-- local model_name = base_path .. out_path .. shape_name .. '_model.t7'
+-- local mean_name = base_path .. out_path .. shape_name .. '_mean.t7'
+-- local output_filename = base_path .. out_path .. shape_name .. '_normals_mynet.xyz'
 
 --------------------------------------------------------------------------
 ---- Read shape:
@@ -62,11 +69,6 @@ end
 ---- Load models of deep net:
 sys.tic()
 
-local model_name = base_path .. model_path .. 'net.t7'
--- Replace with my trained model:
-model_name = base_path .. out_path .. 'cube100k_model.t7'
-local mean_name = base_path .. model_path .. 'mean.t7'
-mean_name = base_path .. out_path .. 'cube100k_mean.t7'
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)
 
