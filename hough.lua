@@ -78,9 +78,9 @@ function M.hough(data, k, num_of_samples, hist_size)
 --  normals:select(2, 2):fill(0.4402)
 ----  normals:select(2, 3):fill(0.8805)
 
-  local v1 = torch.FloatTensor(k, 3)
-  local v2 = torch.FloatTensor(k, 3)
-  local v3 = torch.FloatTensor(k, 3)
+  local v1 = torch.FloatTensor(num_of_samples, 3)
+  local v2 = torch.FloatTensor(num_of_samples, 3)
+  local v3 = torch.FloatTensor(num_of_samples, 3)
 
   local di = torch.FloatTensor(k, 3)
   local di_rot = torch.FloatTensor(k, 3)
@@ -102,10 +102,6 @@ function M.hough(data, k, num_of_samples, hist_size)
     else
       pca1u, pca1s, pca1v = M.pca(di)
     end
-    
-    -- if i==675 then
-    --   dbg()
-    -- end
 
     -- Rotate data using pca (result goes into di_rot) 
     -- (transposed since the order is reversed):
@@ -119,6 +115,7 @@ function M.hough(data, k, num_of_samples, hist_size)
     local r1 = ri[{{}, {1}}]:squeeze()
     local r2 = ri[{{}, {2}}]:squeeze()
     local r3 = ri[{{}, {3}}]:squeeze()
+    
     v1:index(di_rot, 1, r1)
     v2:index(di_rot, 1, r2)
     v3:index(di_rot, 1, r3)
@@ -135,10 +132,6 @@ function M.hough(data, k, num_of_samples, hist_size)
     -- Normalize normals:
     normals:cdiv(normals:norm(2, 2):expandAs(normals))
 
-    -- if i==675 then
-    --   dbg()
-    -- end
-
     -- Project on normals plane by removing third coordinate:
     normals:select(2, 3):fill(0)
     --normals = normals[{{}, {1,2}}]
@@ -151,10 +144,6 @@ function M.hough(data, k, num_of_samples, hist_size)
       pca2u, pca2s, pca2v = M.pca(normals)
     end
 
-    -- if i==675 then
-    --   dbg()
-    -- end
-
     -- Rotate normals by second pca:
     --normals_rot:mm(normals, pca2u:t())
     normals_rot:mm(normals, pca2u)
@@ -165,23 +154,24 @@ function M.hough(data, k, num_of_samples, hist_size)
     pca1u = torch.mm(pca1u, pca2u)
     --pca1u[{{1,2}, {1,2}}] = torch.mm(pca2u, pca1u[{{1,2}, {1,2}}])
 
-    -- Create histogram image by quantizing results:
-    -- Histogram image is hist_size*hist_size cells:
-    local c1 = normals_rot:select(2, 1)
-    local c2 = normals_rot:select(2, 2)
-    -- c = ((c+1)/2) * hist_size:
-    c1:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
-    c2:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
+    -- -- Create histogram image by quantizing results:
+    -- -- Histogram image is hist_size*hist_size cells:
+    -- local c1 = normals_rot:select(2, 1)
+    -- local c2 = normals_rot:select(2, 2)
+    -- -- c = ((c+1)/2) * hist_size:
+    -- c1:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
+    -- c2:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
+    --
+    -- -- computing histogram:
+    -- hough[i] = torch.histc(torch.add(c1, hist_size, c2), hs2, 0, hs2)
 
-    -- computing histogram:
-    hough[i] = torch.histc(torch.add(c1, hist_size, c2), hs2, 0, hs2)
+    hough[i] = M.hough_hist(normals_rot, hist_size)
+
     -- Saving pca for point:
     pcas[i] = pca1u
 
-
     if (math.fmod(i, n/100) == 0) then
       print(string.format('%d%%\t%.2f seconds', i/n*100, sys.toc()))
-
     end
 
   end
@@ -190,6 +180,16 @@ function M.hough(data, k, num_of_samples, hist_size)
   print('Computed Hough transform of all points in ' .. sys.toc() .. ' seconds.')
 
   return hough, pcas
+end
+
+function M.hough_hist(normals,hist_size)
+  local c1 = normals:select(2, 1)
+  local c2 = normals:select(2, 2)
+  -- c = ((c+1)/2) * hist_size:
+  c1:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
+  c2:add(1):div(2):mul(hist_size):floor():clamp(0, hist_size-1)
+
+  return torch.histc(torch.add(c1, hist_size, c2), hist_size*hist_size, 0, hist_size*hist_size)
 end
 
 -- Performs anisotropic hough transform on unsuspecting point clouds.
@@ -279,7 +279,29 @@ function M.preprocess_normals(normals, pcas)
   --normals:resize(n, 3, 1)
   normals:resize(n, 1, 3)
 
-  -- dbg()
+  -- Batch multiplying pcas matrices with normal vectors:
+  --normals = torch.bmm(pcas:float(), normals)
+  normals = torch.bmm(normals, pcas:float())
+
+  normals:resize(n, 3)
+  
+  normals = M.orient_normals(normals)
+
+  -- 2D normal is just the first 2 coordinates:
+  normals = normals[{{}, {1,2}}]
+
+  return normals
+end
+
+-- Translate the ground truth 3D normal to a 2D normal for the neural net
+-- by multiplying by PCA:
+function M.preprocess_normals2(normals, pcas, hist_size)
+  local n = normals:size(1)
+  
+  ---- Rotate by pcas:
+  -- Adding a dimension for batch operation:
+  --normals:resize(n, 3, 1)
+  normals:resize(n, 1, 3)
 
   -- Batch multiplying pcas matrices with normal vectors:
   --normals = torch.bmm(pcas:float(), normals)
@@ -289,19 +311,69 @@ function M.preprocess_normals(normals, pcas)
   
   normals = M.orient_normals(normals)
 
-  -- dbg()
+  local normals_hough = torch.FloatTensor(n, hist_size*hist_size)
+  for i=1,n do
+    normals_hough[i] = M.hough_hist(normals[{{i},{}}], hist_size)
+  end
+  normals_hough = normals_hough:reshape(n, 1, hist_size, hist_size)
 
-  -- 2D normal is just the first 2 coordinates:
-  normals = normals[{{}, {1,2}}]
-
-
-  return normals
+  return normals_hough
 end
 
 -- Translate the results of the deep net to a 3D normal by 
 -- computing the third coordinate and applying pca to each row
 function M.postprocess_normals(normals, pcas)
   local n = normals:size(1)
+
+  -- Compute 3D normals from 2D normals:
+  local norms_2d = torch.norm(normals, 2, 2):pow(2):squeeze()
+  -- Calculate 1 - norm_2d:
+  local normals_3 = torch.FloatTensor(n, 1)
+  normals_3:fill(1):add(-1, norms_2d):clamp(0, 1):sqrt()
+
+  normals = torch.cat(normals, normals_3, 2)
+
+  -- Rotate normals back using PCA:
+  sys.tic()
+  print('Rotating normals...')
+
+  -- Adding a dimension for batch operation:
+  --normals:resize(n, 1, 3)
+  normals:resize(n, 3, 1)
+
+  -- Batch multiplying matrices with normal vectors:
+  -- (note: pcas should be inverted and transposed. Since these are 
+  --        rotation matrices the inverse cancels the transpose)
+  --normals = torch.bmm(normals, pcas:float())
+  normals = torch.bmm(pcas:float(), normals)
+  
+  normals:resize(n, 3)
+
+  normals = M.orient_normals(normals)
+
+  print('Rotated normals in ' .. sys.toc() .. ' seconds.')
+
+  return normals
+end
+
+-- Translate the results of the deep net to a 3D normal by 
+-- computing the third coordinate and applying pca to each row
+function M.postprocess_normals2(normals, pcas, hist_size)
+  local n = normals:size(1)
+
+  _,ind = normals:max(2)
+  ind = ind:float()
+ 
+  -- both zero-based
+  row_ind = (ind-1):div(hist_size):floor()
+  col_ind = (ind-1) - torch.mul(row_ind,hist_size) 
+
+  -- get normals at bin centers
+  normals = torch.cat(
+    (col_ind+0.5):div(hist_size) * 2 - 1,
+    (row_ind+0.5):div(hist_size) * 2 - 1,
+    2)
+
   -- Compute 3D normals from 2D normals:
   local norms_2d = torch.norm(normals, 2, 2):pow(2):squeeze()
   -- Calculate 1 - norm_2d:

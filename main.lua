@@ -18,23 +18,34 @@ local batch_size = 256
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 -- local base_path = '../'
+
 local shape_path = 'data/shapes/'
 --local shape_name = '151A_100k_0005'
 local shape_name = 'cube100k'
+
+local model_ind = 1
 local out_path = 'data/out/'
+
+-- local model_ind = 2
+-- local out_path = 'data/out/model2/'
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
 
--- boulch model
-local model_name = base_path .. 'data/model_1s/net.t7'
-local mean_name = base_path .. 'data/model_1s/mean.t7'
-local output_filename = base_path .. out_path .. shape_name .. '_normals_boulch.xyz'
+-- -- boulch model
+-- local model_name = base_path .. 'data/model_1s/net.t7'
+-- local mean_name = base_path .. 'data/model_1s/mean.t7'
+-- local output_filename = base_path .. out_path .. shape_name .. '_normals_boulch.xyz'
 
 -- -- our model
--- local model_name = base_path .. out_path .. shape_name .. '_model.t7'
--- local mean_name = base_path .. out_path .. shape_name .. '_mean.t7'
--- local output_filename = base_path .. out_path .. shape_name .. '_normals_mynet.xyz'
+-- local model_name = base_path .. out_path .. shape_name .. '_yanir_model.t7'
+-- local mean_name = base_path .. out_path .. shape_name .. '_yanir_mean.t7'
+-- local output_filename = base_path .. out_path .. shape_name .. '_normals_yanir_mynet.xyz'
+
+-- our model
+local model_name = base_path .. out_path .. shape_name .. '_model.t7'
+local mean_name = base_path .. out_path .. shape_name .. '_mean.t7'
+local output_filename = base_path .. out_path .. shape_name .. '_normals_mynet.xyz'
 
 --------------------------------------------------------------------------
 ---- Read shape:
@@ -96,10 +107,14 @@ print('Substracted mean in ' .. sys.toc() .. ' seconds.')
 
 ------------------------------------------------------------------------
 ---- Evaluate deep net:
-local normals = hnet.evaluate(hough, model, batch_size)
+local normals = hnet.evaluate(hough, model, batch_size, model_ind)
 
 -- Transform 2D output of deep net to 3D normals:
-normals = Hough.postprocess_normals(normals, pcas)
+if model_ind == 2 then
+    normals = Hough.postprocess_normals2(normals, pcas, hist_size)
+else
+    normals = Hough.postprocess_normals(normals, pcas)
+end
 
 -- Write output file:
 Mesh.writeXYZ(output_filename, v, normals)
