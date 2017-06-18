@@ -61,10 +61,10 @@ end
 sys.tic()
 
 local model_name = base_path .. model_path .. 'net.t7'
--- Replace with my trained model:
-model_name = base_path .. out_path .. 'cube100k_model.t7'
 local mean_name = base_path .. model_path .. 'mean.t7'
-mean_name = base_path .. out_path .. 'cube100k_mean.t7'
+-- Replace with my trained model:
+--model_name = base_path .. out_path .. 'cube100k_model.t7'
+--mean_name = base_path .. out_path .. 'cube100k_mean.t7'
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)
 
@@ -93,6 +93,9 @@ print('Substracted mean in ' .. sys.toc() .. ' seconds.')
 ------------------------------------------------------------------------
 ---- Evaluate deep net:
 local normals = hnet.evaluate(hough, model, batch_size)
+
+-- Compute normals with pca, i.e. output zeros before post processing:
+--local normals = torch.FloatTensor(n, 2)
 
 -- Transform 2D output of deep net to 3D normals:
 normals = Hough.postprocess_normals(normals, pcas)
