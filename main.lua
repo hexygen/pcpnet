@@ -17,14 +17,34 @@ local hist_size = 33
 local batch_size = 256
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+-- local base_path = '../'
+
 local shape_path = 'data/shapes/'
 --local shape_name = '151A_100k_0005'
 local shape_name = 'cube100k'
+
+local model_ind = 1
 local out_path = 'data/out/'
-local model_path = 'data/model_1s/'
+
+-- local model_ind = 2
+-- local out_path = 'data/out/model2/'
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
+
+-- -- boulch model
+-- local model_name = base_path .. 'data/model_1s/net.t7'
+-- local mean_name = base_path .. 'data/model_1s/mean.t7'
+-- local output_filename = base_path .. out_path .. shape_name .. '_normals_boulch.xyz'
+
+-- -- our model
+-- local model_name = base_path .. out_path .. shape_name .. '_yanir_model.t7'
+-- local mean_name = base_path .. out_path .. shape_name .. '_yanir_mean.t7'
+-- local output_filename = base_path .. out_path .. shape_name .. '_normals_yanir_mynet.xyz'
+
+-- our model
+local model_name = base_path .. out_path .. shape_name .. '_model.t7'
+local mean_name = base_path .. out_path .. shape_name .. '_mean.t7'
 local output_filename = base_path .. out_path .. shape_name .. '_normals_mynet.xyz'
 
 --------------------------------------------------------------------------
@@ -65,6 +85,7 @@ local mean_name = base_path .. model_path .. 'mean.t7'
 -- Replace with my trained model:
 --model_name = base_path .. out_path .. 'cube100k_model.t7'
 --mean_name = base_path .. out_path .. 'cube100k_mean.t7'
+
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)
 
@@ -92,13 +113,17 @@ print('Substracted mean in ' .. sys.toc() .. ' seconds.')
 
 ------------------------------------------------------------------------
 ---- Evaluate deep net:
-local normals = hnet.evaluate(hough, model, batch_size)
+local normals = hnet.evaluate(hough, model, batch_size, model_ind)
 
 -- Compute normals with pca, i.e. output zeros before post processing:
 --local normals = torch.FloatTensor(n, 2)
 
 -- Transform 2D output of deep net to 3D normals:
-normals = Hough.postprocess_normals(normals, pcas)
+if model_ind == 2 then
+    normals = Hough.postprocess_normals2(normals, pcas, hist_size)
+else
+    normals = Hough.postprocess_normals(normals, pcas)
+end
 
 -- Write output file:
 Mesh.writeXYZ(output_filename, v, normals)

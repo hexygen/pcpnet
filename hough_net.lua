@@ -1,4 +1,7 @@
+-- local dbg = require("debugger") -- https://github.com/slembcke/debugger.lua
+
 require 'cutorch'
+require 'nngraph'
 require 'sys'
 require 'optim'
 
@@ -76,8 +79,94 @@ function M.getModel()
   return model
 end
 
+function M.getModel2()
+
+  -- -- autoencoder architecture without skip connections
+  -- local model = nn.Sequential();
+  -- model:add(cudnn.SpatialConvolution(1, 32, 3, 3,2,2,1,1)) -- 32 x 17 x 17 output
+  -- model:add(nn.SpatialBatchNormalization(32))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(cudnn.SpatialConvolution(32, 64, 3, 3,2,2,1,1)) -- 64 x 9 x 9 output
+  -- model:add(nn.SpatialBatchNormalization(64))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(cudnn.SpatialConvolution(64, 128, 3, 3,2,2,1,1)) -- 128 x 5 x 5 output
+  -- model:add(nn.SpatialBatchNormalization(128))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(cudnn.SpatialConvolution(128, 256, 3, 3,2,2,1,1)) -- 256 x 3 x 3 output
+  -- model:add(nn.SpatialBatchNormalization(256))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(cudnn.SpatialConvolution(256, 256, 3, 3,1,1,1,1)) -- 256 x 3 x 3 output
+  -- model:add(nn.SpatialBatchNormalization(256))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(nn.SpatialUpSamplingNearest(2)) -- 128 x 6 x 6 output
+  -- model:add(cudnn.SpatialConvolution(256, 128, 4, 4,1,1,1,1)) -- 128 x 5 x 5 output
+  -- model:add(nn.SpatialBatchNormalization(128))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(nn.SpatialUpSamplingNearest(2)) -- 64 x 10 x 10 output
+  -- model:add(cudnn.SpatialConvolution(128, 64, 4, 4,1,1,1,1)) -- 64 x 9 x 9 output
+  -- model:add(nn.SpatialBatchNormalization(64))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(nn.SpatialUpSamplingNearest(2)) -- 64 x 18 x 18 output
+  -- model:add(cudnn.SpatialConvolution(64, 32, 4, 4,1,1,1,1)) -- 32 x 17 x 17 output
+  -- model:add(nn.SpatialBatchNormalization(32))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(nn.SpatialUpSamplingNearest(2)) -- 64 x 34 x 34 output
+  -- model:add(cudnn.SpatialConvolution(32, 16, 4, 4,1,1,1,1)) -- 16 x 33 x 33 output
+  -- model:add(nn.SpatialBatchNormalization(16))
+  -- model:add(nn.LeakyReLU(0.2))
+  -- model:add(cudnn.SpatialConvolution(16, 1, 3, 3,1,1,1,1)) -- 1 x 33 x 33 output
+  -- model:add(nn.Sigmoid())
+
+  -- autoencoder architecture with skip connections
+  local e0 = - nn.Identity() -- 1 x 33 x 33 output
+  local e1 = e0 - cudnn.SpatialConvolution(1, 32, 3, 3,2,2,1,1) -- 32 x 17 x 17 output
+  local e2 = e1 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(32, 64, 3, 3,2,2,1,1) - cudnn.SpatialBatchNormalization(64) -- 64 x 9 x 9 output
+  local e3 = e2 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(64, 128, 3, 3,2,2,1,1) - cudnn.SpatialBatchNormalization(128) -- 128 x 5 x 5 output
+  local e4 = e3 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(128, 256, 3, 3,2,2,1,1) - cudnn.SpatialBatchNormalization(256) -- 256 x 3 x 3 output
+  local e5 = e4 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(256, 256, 3, 3,1,1,1,1) - cudnn.SpatialBatchNormalization(256) -- 256 x 3 x 3 output
+
+  local d1_ = e5 - nn.ReLU(true) - nn.SpatialUpSamplingNearest(2) - cudnn.SpatialConvolution(256, 128, 4, 4,1,1,1,1) - cudnn.SpatialBatchNormalization(128) -- 128 x 5 x 5 output
+  local d1 = {d1_,e3} - nn.JoinTable(2)
+  local d2_ = d1 - nn.ReLU(true) - nn.SpatialUpSamplingNearest(2) - cudnn.SpatialConvolution(256, 64, 4, 4,1,1,1,1) - cudnn.SpatialBatchNormalization(64) -- 64 x 9 x 9 output
+  local d2 = {d2_,e2} - nn.JoinTable(2)
+  local d3_ = d2 - nn.ReLU(true) - nn.SpatialUpSamplingNearest(2) - cudnn.SpatialConvolution(128, 32, 4, 4,1,1,1,1) - cudnn.SpatialBatchNormalization(32) -- 32 x 17 x 17 output
+  local d3 = {d3_,e1} - nn.JoinTable(2)
+  local d4_ = d3 - nn.ReLU(true) - nn.SpatialUpSamplingNearest(2) - cudnn.SpatialConvolution(64, 16, 4, 4,1,1,1,1) - cudnn.SpatialBatchNormalization(16) -- 16 x 33 x 33 output
+  local d4 = {d4_,e0} - nn.JoinTable(2)
+  local d5 = d4 - nn.ReLU(true) - cudnn.SpatialConvolution(17, 1, 3, 3,1,1,1,1) -- 1 x 33 x 33 output
+
+  local o1 = d5 - nn.Sigmoid()
+
+  local model = nn.gModule({e0},{o1})
+
+  -- custom conv and batchnorm layer initialization
+  M.initModelparams(model)
+
+  return model
+end
+
+function M.initLayerparams(layer)
+    local layertype = torch.type(layer)
+    if layertype:find('Convolution') then
+        -- m.weight:normal(0.0, 0.02)
+        -- m.bias:fill(0)
+
+        -- initialize weights to a normal distribution with variance 2 / (number of neuron inputs) and bias to zero
+        layer.weight:normal(0.0,torch.sqrt(2.0 / (layer.nInputPlane*layer.kW*layer.kH)))
+        layer.bias:zero()
+    elseif layertype:find('BatchNormalization') then
+        -- initialize weights to a normal distribution with variance 0.02 and bias to zero
+        if layer.weight then layer.weight:normal(1.0, 0.02) end
+        if layer.bias then layer.bias:zero() end
+    end
+end
+
+function M.initModelparams(model)
+    model:apply(M.initLayerparams)
+end
+
 -- Trains the given model using the samples and the ground truth data.
-function M.train(samples, gt, model, batch_size, epochs, learning_rate)
+function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_ind)
 
   -- Just in case:
   samples = samples:float()
@@ -128,7 +217,12 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate)
     -- split into batches using view:
     local batches = shuffled:view(size_batches)
     -- output is a 2D normal so the dimension is 2:
-    local gt_batches = gt_shuffled:view(bn, batch_size, 2)
+    local gt_batches
+    if model_ind == 2 then
+      gt_batches = gt_shuffled:view(size_batches)
+    else
+      gt_batches = gt_shuffled:view(bn, batch_size, 2)
+    end
 
     for b = 1, bn do
 
@@ -157,7 +251,6 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate)
           print('Loss = ' .. loss .. ', Norm = ' .. out_norm)
         end
         
-
         return loss, gradParams
       end
 
@@ -183,7 +276,7 @@ end
 
 
 
-function M.evaluate(samples, model, batch_size)
+function M.evaluate(samples, model, batch_size, model_ind)
 
   local n = samples:size(1)
 
@@ -192,7 +285,13 @@ function M.evaluate(samples, model, batch_size)
 
   local ind_start = 1
   local ind_end = batch_size
-  local outputs = torch.FloatTensor(n, 2)
+  
+  local outputs = nil
+  if model_ind == 2 then
+    outputs = torch.FloatTensor(n, samples:size(3) * samples:size(4))
+  else
+    outputs = torch.FloatTensor(n, 2)
+  end
 
   while (ind_start < n) do
 

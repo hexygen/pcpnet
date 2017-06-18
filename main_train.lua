@@ -17,13 +17,21 @@ local hist_size = 33
 local batch_size = 64
 local epochs = 50
 local train_ratio = 0.85
-local learning_rate = 0.001
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+-- local base_path = '../'
+
 local shape_path = 'data/shapes/'
 local shape_name = 'cube100k'
-local out_path = 'data/out/'
 local model_path = 'data/model_1s/'
+
+local model_ind = 1
+local out_path = 'data/out/'
+local learning_rate = 0.001
+
+-- local model_ind = 2
+-- local out_path = 'data/out/model2/'
+-- local learning_rate = 0.00001
 
 local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
 local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
@@ -68,7 +76,11 @@ hough = hough:reshape(hough:size(1), 1, hist_size, hist_size)
 hough:div(num_of_samples)
 
 -- Transform 3D ground truth normals to deep net 2D normals using PCAs:
-gt = Hough.preprocess_normals(gt_normals, pcas)
+if model_ind == 2 then
+    gt = Hough.preprocess_normals2(gt_normals, pcas, hist_size)
+else
+    gt = Hough.preprocess_normals(gt_normals, pcas)
+end
 print('Rotated normals in ' .. sys.toc() .. ' seconds.')
 
 
@@ -96,7 +108,12 @@ print('Preprocessed data in ' .. sys.toc() .. ' seconds.')
 ---- Initialize model of deep net:
 sys.tic()
 
-local model = hnet.getModel()
+local model = nil
+if model_ind == 2 then
+    model = hnet.getModel2()
+else
+    model = hnet.getModel()
+end
 --local model_name = base_path ..out_path .. 'model.t7'
 --local mean_name = base_path .. model_path .. 'mean.t7'
 --local mean = torch.load(mean_name):float()
@@ -107,7 +124,7 @@ print('Initialized model in ' .. sys.toc() .. ' seconds.')
 ------------------------------------------------------------------------
 ---- Train deep net:
 sys.tic()
-model = hnet.train(hough_train, gt_train, model, batch_size, epochs, learning_rate)
+model = hnet.train(hough_train, gt_train, model, batch_size, epochs, learning_rate, model_ind)
 
 print('Trained model in ' .. sys.toc() .. ' seconds.')
 sys.tic()
