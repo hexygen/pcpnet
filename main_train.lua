@@ -1,9 +1,12 @@
+-- local dbg = require("debugger") -- https://github.com/slembcke/debugger.lua
+
 require 'nn'
 require 'cutorch'
 require 'cunn'
 require 'cudnn'
 require 'image' -- is it necessary?
 require 'sys'
+-- require 'hdf5'
 local utils = require('utils')
 
 local Mesh = require('mesh')
@@ -15,56 +18,92 @@ local k = 100
 local num_of_samples = 1000
 local hist_size = 33
 local batch_size = 64
-local epochs = 50
+-- local epochs = 50
+local epochs = 100
 local train_ratio = 0.85
 
-local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
--- local base_path = '../'
+-- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+local base_path = '../'
 
 local shape_path = 'data/shapes/'
-local shape_name = 'cube100k'
-local model_path = 'data/model_1s/'
+local shape_name = {'cube100k','fandisk100k','bunny100k','armadillo100k'}
+-- local shape_name = {'cube100k'}
 
 local model_ind = 1
-local out_path = 'data/out/'
+local out_path = 'data/out/regression_model/'
 local learning_rate = 0.001
 
 -- local model_ind = 2
--- local out_path = 'data/out/model2/'
+-- local out_path = 'data/out/classification_model/'
 -- local learning_rate = 0.00001
 
-local xyz_filename = base_path .. shape_path .. shape_name .. '.xyz'
-local gt_filename = base_path .. shape_path .. shape_name .. '.normals'
-local output_filename = base_path .. out_path .. shape_name .. '_normals.xyz'
-local model_filename = base_path .. out_path .. shape_name .. '_model.t7'
-local mean_filename = base_path .. out_path .. shape_name .. '_mean.t7'
-
---------------------------------------------------------------------------
----- Read shape:
-local v = Mesh.readXYZ(xyz_filename)
-local n = v:size(1)
----- Read ground truth data:
-local gt_normals = Mesh.readXYZ(gt_filename)
-
---------------------------------------------------------------------------
----- Load or compute Hough transform and PCA for each point on the shape:
-local hough_save_name = base_path .. out_path .. shape_name .. '_hough_100.txt'
-local pca_save_name = base_path .. out_path .. shape_name .. '_pca_100.txt'
-
-local hough, pcas
-if not utils.exists(hough_save_name) then
-  hough, pcas = Hough.hough(v, k, num_of_samples, hist_size)
-
-  torch.save(hough_save_name, hough, 'ascii')
-  torch.save(pca_save_name, pcas, 'ascii')
+local model_filename = '';
+local mean_filename = '';
+if #shape_name == 1 then
+  model_filename = base_path .. out_path .. shape_name[1] .. '_model.t7'
+  mean_filename = base_path .. out_path .. shape_name[1] .. '_mean.t7'
 else
-  sys.tic()
-  
-  hough = torch.load(hough_save_name, 'ascii')
-  pcas = torch.load(pca_save_name, 'ascii')
-  
-  print('Loaded Hough transform and PCA from file in ' .. sys.toc() .. ' seconds.')
+  model_filename = base_path .. out_path .. 'model.t7'
+  mean_filename = base_path .. out_path .. 'mean.t7'
 end
+
+--------------------------------------------------------------------------
+---- Iterate over all shapes
+local gt_normals = {}
+local hough = {}
+local pcas = {}
+for i,sn in ipairs(shape_name) do
+  
+  ---- Read shape:
+  local xyz_filename = base_path .. shape_path .. sn .. '.xyz'
+  local gt_filename = base_path .. shape_path .. sn .. '.normals'
+
+  local v = Mesh.readXYZ(xyz_filename)
+  local n = v:size(1)
+  
+  ---- Read ground truth data:
+  local gtn = Mesh.readXYZ(gt_filename)
+
+  --------------------------------------------------------------------------
+  ---- Load or compute Hough transform and PCA for each point on the shape:
+  local hough_save_name = base_path .. out_path .. sn .. '_hough_100.txt'
+  local pca_save_name = base_path .. out_path .. sn .. '_pca_100.txt'
+
+  local h, p
+  if not utils.exists(hough_save_name) then
+    h, p = Hough.hough(v, k, num_of_samples, hist_size)
+
+    torch.save(hough_save_name, h, 'ascii')
+    torch.save(pca_save_name, p, 'ascii')
+    -- local pca_file = hdf5.open(base_path .. out_path .. sn .. '_hough_100.h5', 'w')
+    -- pca_file:write('hough', h)
+    -- pca_file:close()
+    -- local hough_file = hdf5.open(base_path .. out_path .. shape_name .. '_pca_100.h5', 'w')
+    -- hough_file:write('pcas', p)
+    -- hough_file:close()
+  else
+    sys.tic()
+    
+    h = torch.load(hough_save_name, 'ascii')
+    p = torch.load(pca_save_name, 'ascii')
+    
+    print('Loaded Hough transform and PCA from file in ' .. sys.toc() .. ' seconds.')
+  end
+  
+  ---- Append gt, hough and pca of current shape to input list
+  if i==1 then
+    gt_normals = gtn
+    hough = h
+    pcas = p
+  else
+    gt_normals = torch.cat(gt_normals,gtn,1)
+    hough = torch.cat(hough,h,1)
+    pcas = torch.cat(pcas,p,1)
+  end
+
+end
+
+local n = hough:size(1)
 
 ------------------------------------------------------------------------
 ---- Preprocess data - split into train and test set:
@@ -114,10 +153,6 @@ if model_ind == 2 then
 else
     model = hnet.getModel()
 end
---local model_name = base_path ..out_path .. 'model.t7'
---local mean_name = base_path .. model_path .. 'mean.t7'
---local mean = torch.load(mean_name):float()
---local model = torch.load(model_name)
 
 print('Initialized model in ' .. sys.toc() .. ' seconds.')
 
