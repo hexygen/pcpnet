@@ -80,11 +80,11 @@ end
 ---- Load models of deep net:
 sys.tic()
 
-local model_name = base_path .. model_path .. 'net.t7'
-local mean_name = base_path .. model_path .. 'mean.t7'
+--local model_name = base_path .. model_path .. 'net.t7'
+--local mean_name = base_path .. model_path .. 'mean.t7'
 -- Replace with my trained model:
---model_name = base_path .. out_path .. 'cube100k_model.t7'
---mean_name = base_path .. out_path .. 'cube100k_mean.t7'
+model_name = base_path .. out_path .. 'cube100k_model.t7'
+mean_name = base_path .. out_path .. 'cube100k_mean.t7'
 
 local mean = torch.load(mean_name):float()
 local model = torch.load(model_name)

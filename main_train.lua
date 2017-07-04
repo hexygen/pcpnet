@@ -14,9 +14,10 @@ local hnet = require('hough_net')
 local k = 100
 local num_of_samples = 1000
 local hist_size = 33
-local batch_size = 64
+local hist_center = 17
+local batch_size = 256
 local epochs = 50
-local train_ratio = 0.85
+local train_ratio = 0.95
 
 local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 -- local base_path = '../'
@@ -27,7 +28,7 @@ local model_path = 'data/model_1s/'
 
 local model_ind = 1
 local out_path = 'data/out/'
-local learning_rate = 0.001
+local learning_rate = 0.0005
 
 -- local model_ind = 2
 -- local out_path = 'data/out/model2/'
@@ -70,10 +71,35 @@ end
 ---- Preprocess data - split into train and test set:
 sys.tic()
 
+-- Find points next to edges (cube only):
+--vm = v:abs():median()
+--is_edgy = vm:gt(0.75):cmul(vm:lt(0.99))
+--ind_edgy = torch.nonzero(is_edgy):select(2, 1)
+
+
+-- Exclude flat points from training set:
+hough_center = hough:reshape(hough:size(1), 1, hist_size, hist_size)[{{},{}, hist_center, hist_center}]
+-- If all samples are in the center cell, this is a flat area:
+is_nonflat = hough_center:ne(num_of_samples)
+ind_nonflat = torch.nonzero(is_nonflat):select(2, 1)
+
+hough = hough:index(1, ind_nonflat)
+gt_normals = gt_normals:index(1, ind_nonflat)
+pcas = pcas:index(1, ind_nonflat)
+
+n = ind_nonflat:size(1)
+
+-- normalize each sample based on its maximum value:
+hmax = hough:max(2):expandAs(hough)
+hough:cdiv(hmax)
+
+---- normalize hough transform:
+--hough:div(num_of_samples)
+
 -- Change input size: 1 input layer (channel), hist_size * hist_size image:
 hough = hough:reshape(hough:size(1), 1, hist_size, hist_size)
--- normalize hough transform:
-hough:div(num_of_samples)
+
+
 
 -- Transform 3D ground truth normals to deep net 2D normals using PCAs:
 if model_ind == 2 then
