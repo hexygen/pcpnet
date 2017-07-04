@@ -119,7 +119,7 @@ function M.getModel2()
 
   -- autoencoder architecture with skip connections
   local e0 = - nn.Identity() -- 1 x 33 x 33 output
-  local e1 = e0 - cudnn.SpatialConvolution(1, 32, 3, 3,2,2,1,1) -- 32 x 17 x 17 output
+  local e1 = e0 - cudnn.SpatialConvolution(1, 32, 3, 3,2,2,1,1) -- 32 x data17 x 17 output
   local e2 = e1 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(32, 64, 3, 3,2,2,1,1) - cudnn.SpatialBatchNormalization(64) -- 64 x 9 x 9 output
   local e3 = e2 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(64, 128, 3, 3,2,2,1,1) - cudnn.SpatialBatchNormalization(128) -- 128 x 5 x 5 output
   local e4 = e3 - nn.LeakyReLU(0.2, true) - cudnn.SpatialConvolution(128, 256, 3, 3,2,2,1,1) - cudnn.SpatialBatchNormalization(256) -- 256 x 3 x 3 output
@@ -247,7 +247,7 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_in
         model:backward(inputs, dloss_doutputs)
 
         out_norm = torch.sum(torch.norm(outputs, 2, 2))
-        if (math.fmod(b, 5) == 0) then
+        if (math.fmod(b, 1) == 0) then
           print('Loss = ' .. loss .. ', Norm = ' .. out_norm)
         end
         
@@ -257,7 +257,7 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_in
       --- TODO: Check parameters for params optimState
       optim.sgd(feval, params, optimState)
 
-      if (math.fmod(b, 100) == 0) then
+      if (math.fmod(b, 10) == 0) then
         print('Training: epoch '.. epoch .. ' batch ' .. b .. ' points = ' .. (b*batch_size))
       end
 
