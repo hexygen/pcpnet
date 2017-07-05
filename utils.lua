@@ -51,4 +51,32 @@ function M.randperm_partial(n, k, max)
   return rp
 end
 
+function M.findlast(str,char)
+  local ind = str:reverse():find(char,1,true)
+  
+  if ind then
+    ind = str:len() - (ind-1)
+  end
+
+  return ind
+end
+
+function M.splitext(filename)
+
+  local sep = package.config:sub(1,1)
+  local sep_ind = M.findlast(filename,sep)
+  local dot_ind = M.findlast(filename,".")
+  local n = nil
+  local e = nil
+  if dot_ind and dot_ind > sep_ind then
+    n = filename:sub(1, dot_ind-1)
+    e = filename:sub(dot_ind)
+  else
+    n = filename
+    e = ''
+  end
+
+  return n, e
+end
+
 return M
