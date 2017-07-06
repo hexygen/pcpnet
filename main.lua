@@ -30,15 +30,12 @@ local shape_name = {'fandisk100k','bunny100k','armadillo100k'}
 -- -- pca normals
 local model_ind = 0
 local out_path = 'data/out/pca_only/'
-local postfix = '_pca'
 
 --local model_ind = 1
 --local out_path = 'data/out/re/'
---local postfix = '_re'
 
 --local model_ind = 2
 --local out_path = 'data/out/classification_model/'
---local postfix = '_cl'
 
 for i,sn in ipairs(shape_name) do
   local xyz_filename = base_path .. shape_path .. sn .. '.xyz'
@@ -52,7 +49,7 @@ for i,sn in ipairs(shape_name) do
   -- our model
   local model_name = base_path .. 'data/out/cube100k_model.t7'
   local mean_name = base_path .. 'data/out/cube100k_mean.t7'
-  local output_filename = base_path .. out_path .. sn .. '_normals' .. postfix .. '.xyz'
+  local output_filename = base_path .. out_path .. sn .. '_normals.xyz'
   -- local output_filename = base_path .. out_path .. sn .. '_normals_avg.xyz'
 
   --------------------------------------------------------------------------
