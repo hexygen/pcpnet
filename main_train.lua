@@ -21,18 +21,18 @@ local hist_center = 17
 local batch_size = 256
 local epochs = 50
 local train_ratio = 0.95
-=======
+
 local batch_size = 64
 -- local epochs = 50
-local epochs = 100
+local epochs = 30
 local train_ratio = 0.85
 
--- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
-local base_path = '../'
+local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+-- local base_path = '../'
 
 local shape_path = 'data/shapes/'
-local shape_name = {'cube100k','fandisk100k','bunny100k','armadillo100k'}
--- local shape_name = {'cube100k'}
+--local shape_name = {'cube100k','fandisk100k','bunny100k','armadillo100k'}
+local shape_name = {'fandisk100k'}
 
 local model_ind = 1
 local out_path = 'data/out/regression_model/'
