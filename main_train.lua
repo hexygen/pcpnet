@@ -33,14 +33,19 @@ local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
 local shape_path = 'data/shapes/'
 --local shape_name = {'cube100k','fandisk100k','bunny100k','armadillo100k'}
 local shape_name = {'fandisk100k'}
+-- local shape_name = {'bunny100k'}
+-- local shape_name = {'cube100k','fandisk100k','bunny100k','armadillo100k'}
+-- local shape_name = {'cube100k_noise_brown_3e-2','fandisk100k_noise_brown_3e-2','bunny100k_noise_brown_3e-2','armadillo100k_noise_brown_3e-2'}
 
-local model_ind = 1
-local out_path = 'data/out/regression_model/'
-local learning_rate = 0.001
+-- local model_ind = 1
+-- -- local out_path = 'data/out/regression_model/'
+-- local out_path = 'data/out/regression_model_noise_brown_3e-2/'
+-- local learning_rate = 0.001
 
--- local model_ind = 2
+local model_ind = 2
 -- local out_path = 'data/out/classification_model/'
--- local learning_rate = 0.00001
+local out_path = 'data/out/classification_model_noise_brown_3e-2/'
+local learning_rate = 0.00001
 
 local model_filename = '';
 local mean_filename = '';
@@ -71,11 +76,11 @@ for i,sn in ipairs(shape_name) do
 
   --------------------------------------------------------------------------
   ---- Load or compute Hough transform and PCA for each point on the shape:
-  local hough_save_name = base_path .. out_path .. sn .. '_hough_100.txt'
-  local pca_save_name = base_path .. out_path .. sn .. '_pca_100.txt'
+  local hough_save_name = string.format('%s%s%s_hough_%d_%d.txt', base_path, shape_path, sn, hist_size, num_of_samples)
+  local pca_save_name = string.format('%s%s%s_pca_%d_%d.txt', base_path, shape_path, sn, hist_size, num_of_samples)
 
   local h, p
-  if not utils.exists(hough_save_name) then
+  if not utils.exists(hough_save_name) or not utils.exists(pca_save_name) then
     h, p = Hough.hough(v, k, num_of_samples, hist_size)
 
     torch.save(hough_save_name, h, 'ascii')
@@ -83,7 +88,7 @@ for i,sn in ipairs(shape_name) do
     -- local pca_file = hdf5.open(base_path .. out_path .. sn .. '_hough_100.h5', 'w')
     -- pca_file:write('hough', h)
     -- pca_file:close()
-    -- local hough_file = hdf5.open(base_path .. out_path .. shape_name .. '_pca_100.h5', 'w')
+    -- local hough_file = hdf5.open(base_path .. out_path .. sn .. '_pca_100.h5', 'w')
     -- hough_file:write('pcas', p)
     -- hough_file:close()
   else
