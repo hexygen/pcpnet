@@ -247,7 +247,7 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_in
         model:backward(inputs, dloss_doutputs)
 
         out_norm = torch.sum(torch.norm(outputs, 2, 2))
-        if (math.fmod(b, 1) == 0) then
+        if (math.fmod(b, 5) == 0) then
           print('Loss = ' .. loss .. ', Norm = ' .. out_norm)
         end
         
@@ -257,7 +257,7 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_in
       --- TODO: Check parameters for params optimState
       optim.sgd(feval, params, optimState)
 
-      if (math.fmod(b, 10) == 0) then
+      if (math.fmod(b, 50) == 0) then
         print('Training: epoch '.. epoch .. ' batch ' .. b .. ' points = ' .. (b*batch_size))
       end
 
