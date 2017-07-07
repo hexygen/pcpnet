@@ -41,6 +41,7 @@ for i,model_id in ipairs(model_ids) do
   local batch_size = params["batch_size"]
   local epochs = params["epochs"]
   local train_ratio = params["train_ratio"]
+  local learning_rate = params["learning_rate"]
 
   local shapes = model_list[model_id]["shapes"]
 
@@ -53,9 +54,6 @@ for i,model_id in ipairs(model_ids) do
     end
   end
   
-  
-  local learning_rate = model_list[model_id]["learning_rate"]
-
 
   local model_filename = out_path .. 'model.t7'
   local mean_filename = out_path .. 'mean.t7'

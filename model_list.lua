@@ -10,12 +10,8 @@ parameters["num_of_samples"] = 1000
 parameters["hist_size"] = 33
 parameters["hist_center"] = 17
 parameters["batch_size"] = 256
-parameters["epochs"] = 50
-parameters["train_ratio"] = 0.95
-
-parameters["batch_size"] = 64
 parameters["epochs"] = 30
-parameters["train_ratio"] = 0.85
+parameters["train_ratio"] = 0.5
 parameters["learning_rate"] = 0.001
 
 
