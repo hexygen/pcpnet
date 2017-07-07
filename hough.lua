@@ -358,23 +358,31 @@ end
 
 -- Translate the results of the deep net to a 3D normal by 
 -- computing the third coordinate and applying pca to each row
-function M.postprocess_normals2(normals, pcas, hist_size)
+function M.postprocess_normals2(normals, pcas, hist_size, pred_method)
   local n = normals:size(1)
 
-  -- -- weighted mean of the histogram votes
-  -- row_ind = torch.range(0,normals:size(2)-1):div(hist_size):floor() -- zero-based
-  -- col_ind = torch.range(0,normals:size(2)-1) - torch.mul(row_ind,hist_size) -- zero-based
-  -- row_ind = torch.repeatTensor(row_ind,n,1):float()
-  -- col_ind = torch.repeatTensor(col_ind,n,1):float()
-  -- hist_sum = normals:sum(2)
-  -- row_ind = row_ind:cmul(normals):sum(2):cdiv(hist_sum)
-  -- col_ind = col_ind:cmul(normals):sum(2):cdiv(hist_sum)
-  
-  -- maximum of the histogram votes
-  _,ind = normals:max(2)
-  ind = ind:float()
-  row_ind = (ind-1):div(hist_size):floor() -- zero-based
-  col_ind = (ind-1) - torch.mul(row_ind,hist_size) -- zero-based
+  if pred_method == '' or pred_method == 'max' then
+    
+    -- maximum of the histogram votes
+    _,ind = normals:max(2)
+    ind = ind:float()
+    row_ind = (ind-1):div(hist_size):floor() -- zero-based
+    col_ind = (ind-1) - torch.mul(row_ind,hist_size) -- zero-based    
+
+  elseif pred_method == 'avg' then
+
+    -- weighted mean of the histogram votes
+    row_ind = torch.range(0,normals:size(2)-1):div(hist_size):floor() -- zero-based
+    col_ind = torch.range(0,normals:size(2)-1) - torch.mul(row_ind,hist_size) -- zero-based
+    row_ind = torch.repeatTensor(row_ind,n,1):float()
+    col_ind = torch.repeatTensor(col_ind,n,1):float()
+    hist_sum = normals:sum(2)
+    row_ind = row_ind:cmul(normals):sum(2):cdiv(hist_sum)
+    col_ind = col_ind:cmul(normals):sum(2):cdiv(hist_sum)    
+
+  else
+    error('Unknown prediction method.')
+  end
 
   -- get normals at bin centers
   normals = torch.cat(

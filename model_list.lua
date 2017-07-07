@@ -24,6 +24,13 @@ model["shapes"] = {}
 models[model["id"]] = model
 
 model = {}
+model["id"] = "reb"
+model["method"] = "re"
+model["name"] = "Regression (Boulch)"
+model["shapes"] = {}
+models[model["id"]] = model
+
+model = {}
 model["id"] = "re1"
 model["method"] = "re"
 model["name"] = "Regression (Cube)"

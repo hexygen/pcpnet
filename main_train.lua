@@ -6,7 +6,7 @@ require 'cunn'
 require 'cudnn'
 require 'image' -- is it necessary?
 require 'sys'
--- require 'hdf5'
+require 'hdf5'
 require 'lfs'
 local utils = require('utils')
 
@@ -17,8 +17,8 @@ local hnet = require('hough_net')
 local model_list = require('model_list')
 
 
-local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
--- local base_path = '../'
+-- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+local base_path = '../'
 
 local shape_path = 'data/shapes/'
 
@@ -77,26 +77,34 @@ for i,model_id in ipairs(model_ids) do
 
     --------------------------------------------------------------------------
     ---- Load or compute Hough transform and PCA for each point on the shape:
-    local hough_save_name = string.format('%s%s%s_hough_%d_%d.txt', base_path, shape_path, sn, hist_size, num_of_samples)
-    local pca_save_name = string.format('%s%s%s_pca_%d_%d.txt', base_path, shape_path, sn, hist_size, num_of_samples)
+    local hough_save_name = string.format('%s%s%s_hough_%d_%d.h5', base_path, shape_path, sn, hist_size, num_of_samples)
+    local pca_save_name = string.format('%s%s%s_pca_%d_%d.h5', base_path, shape_path, sn, hist_size, num_of_samples)
 
     local h, p
     if not utils.exists(hough_save_name) or not utils.exists(pca_save_name) then
       h, p = Hough.hough(v, k, num_of_samples, hist_size)
 
-      torch.save(hough_save_name, h, 'ascii')
-      torch.save(pca_save_name, p, 'ascii')
-      -- local pca_file = hdf5.open(base_path .. out_path .. sn .. '_hough_100.h5', 'w')
-      -- pca_file:write('hough', h)
-      -- pca_file:close()
-      -- local hough_file = hdf5.open(base_path .. out_path .. sn .. '_pca_100.h5', 'w')
-      -- hough_file:write('pcas', p)
-      -- hough_file:close()
+      -- torch.save(hough_save_name, h, 'ascii')
+      -- torch.save(pca_save_name, p, 'ascii')
+      
+      local h5file = hdf5.open(hough_save_name, 'w')
+      h5file:write('hough', h)
+      h5file:close()
+      local h5file = hdf5.open(pca_save_name, 'w')
+      h5file:write('pcas', p)
+      h5file:close()
     else
       sys.tic()
       
-      h = torch.load(hough_save_name, 'ascii')
-      p = torch.load(pca_save_name, 'ascii')
+      -- h = torch.load(hough_save_name, 'ascii')
+      -- p = torch.load(pca_save_name, 'ascii')
+
+      local h5file = hdf5.open(hough_save_name, 'r')
+      h = h5file:read('hough'):all()
+      h5file:close()
+      local h5file = hdf5.open(pca_save_name, 'r')
+      p = h5file:read('pcas'):all()
+      h5file:close()
       
       print('Loaded Hough transform and PCA from file in ' .. sys.toc() .. ' seconds.')
     end

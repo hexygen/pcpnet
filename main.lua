@@ -6,7 +6,7 @@ require 'cunn'
 require 'cudnn'
 require 'image' -- is it necessary?
 require 'sys'
---require 'hdf5'
+require 'hdf5'
 require 'os'
 local utils = require('utils')
 
@@ -21,8 +21,8 @@ local num_of_samples = 1000
 local hist_size = 33
 local batch_size = 256
 
-local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
--- local base_path = '../'
+-- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+local base_path = '../'
 
 local shape_path = 'data/shapes/'
 
@@ -40,18 +40,24 @@ for k,v in pairs(shapes) do
 end
 
 ------------------------------------------------------------------
----- For day to day testing change only the following two lines:
+---- For day to day testing change only the following 2-3 lines:
 ------------------------------------------------------------------
 -- Shapes to run - change this to evaluate specific shapes:
-local run_shapes = {'c','f','b','a','cn','fn','bn','an'}
+local run_shapes = {'c','f','b','a','d','h','cn','fn','bn','an','dn','hn'}
 -- Model to run - change this to evaluate on different models:
-local model = model_list['re3']
+local model = model_list['pca']
+-- Optional: Prediction method with a given model (leave empty if there is only one prediction method)
+local pred_method = '';
 ------------------------------------------------------------------
 
-local out_path = 'data/out/' .. model['id'] .. '/'
+local model_path = 'data/out/' .. model['id'] .. '/'
+local out_path = model_path
+if string.len(pred_method) > 0 then
+  out_path = out_path .. pred_method .. '/'
+end
 
-local model_filename = base_path .. out_path .. 'model.t7'
-local mean_filename = base_path .. out_path .. 'mean.t7'
+local model_filename = base_path .. model_path .. 'model.t7'
+local mean_filename = base_path .. model_path .. 'mean.t7'
 
 
 for i,sid in ipairs(run_shapes) do
@@ -71,20 +77,35 @@ for i,sid in ipairs(run_shapes) do
 
   --------------------------------------------------------------------------
   ---- Load or compute Hough transform and PCA for each point on the shape:
-  local hough_save_name = string.format('%s%s%s_hough_%d_%d.txt', base_path, shape_path, sn, hist_size, num_of_samples)
-  local pca_save_name = string.format('%s%s%s_pca_%d_%d.txt', base_path, shape_path, sn, hist_size, num_of_samples)
+  local hough_save_name = string.format('%s%s%s_hough_%d_%d.h5', base_path, shape_path, sn, hist_size, num_of_samples)
+  local pca_save_name = string.format('%s%s%s_pca_%d_%d.h5', base_path, shape_path, sn, hist_size, num_of_samples)
 
   local hough, pcas
   if not utils.exists(hough_save_name) or not utils.exists(pca_save_name) then
     hough, pcas = Hough.hough(v, k, num_of_samples, hist_size)
 
-    torch.save(hough_save_name, hough, 'ascii')
-    torch.save(pca_save_name, pcas, 'ascii')
+    -- torch.save(hough_save_name, hough, 'ascii')
+    -- torch.save(pca_save_name, pcas, 'ascii')
+
+    local h5file = hdf5.open(hough_save_name, 'w')
+    h5file:write('hough', hough)
+    h5file:close()
+    local h5file = hdf5.open(pca_save_name, 'w')
+    h5file:write('pcas', pcas)
+    h5file:close()
+
   else
     sys.tic()
 
-    hough = torch.load(hough_save_name, 'ascii')
-    pcas = torch.load(pca_save_name, 'ascii')
+    -- hough = torch.load(hough_save_name, 'ascii')
+    -- pcas = torch.load(pca_save_name, 'ascii')
+
+    local h5file = hdf5.open(hough_save_name, 'r')
+    hough = h5file:read('hough'):all()
+    h5file:close()
+    local h5file = hdf5.open(pca_save_name, 'r')
+    pcas = h5file:read('pcas'):all()
+    h5file:close()
 
     print('Loaded Hough transform and PCA from file in ' .. sys.toc() .. ' seconds.')
   end
@@ -146,7 +167,7 @@ for i,sid in ipairs(run_shapes) do
     -- local hough_file = hdf5.open(base_path .. out_path .. sn .. '_hough_opt.h5', 'w')
     -- hough_file:write('hough_opt', normals)
     -- hough_file:close()
-    normals = Hough.postprocess_normals2(normals, pcas, hist_size)
+    normals = Hough.postprocess_normals2(normals, pcas, hist_size, pred_method)
   else
     normals = Hough.postprocess_normals(normals, pcas)
   end
