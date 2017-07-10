@@ -1,0 +1,16 @@
+function [ prec ] = PrecisionCurve( err )
+% PRECISIONCURVE Creates a precision curve where each point signifies the
+% percent of data points with an error less than X.
+
+k = 100;
+n = length(err);
+
+m = max(err);
+
+for (i = 0; 
+
+
+
+
+end
+
