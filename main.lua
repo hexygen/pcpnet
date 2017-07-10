@@ -21,8 +21,8 @@ local num_of_samples = 1000
 local hist_size = 33
 local batch_size = 256
 
--- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
-local base_path = '../'
+local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+-- local base_path = '../'
 
 local shape_path = 'data/shapes/'
 
@@ -134,8 +134,8 @@ for x, model in ipairs(run_models) do
       ---- Load models of deep net:
       sys.tic()
 
-      local mean = torch.load(mean_name):float()
-      local model = torch.load(model_name)
+      local mean = torch.load(mean_filename):float()
+      local model = torch.load(model_filename)
 
       print('Loaded model in ' .. sys.toc() .. ' seconds.')
 
