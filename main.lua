@@ -21,8 +21,8 @@ local num_of_samples = 1000
 local hist_size = 33
 local batch_size = 256
 
-local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
--- local base_path = '../'
+-- local base_path = '/home/yanir/Documents/Projects/DeepCloud/'
+local base_path = '../'
 
 local shape_path = 'data/shapes/'
 
@@ -161,7 +161,7 @@ for x, model in ipairs(run_models) do
 
       ------------------------------------------------------------------------
       ---- Evaluate deep net:
-      normals = hnet.evaluate(hough, model, batch_size, model_ind)
+      normals = hnet.evaluate(hough, model, batch_size, model['method'])
     end
 
     -- Transform 2D output of deep net to 3D normals:

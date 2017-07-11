@@ -166,7 +166,7 @@ function M.initModelparams(model)
 end
 
 -- Trains the given model using the samples and the ground truth data.
-function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_ind)
+function M.train(samples, gt, model, batch_size, epochs, learning_rate, method)
 
   -- Just in case:
   samples = samples:float()
@@ -218,7 +218,7 @@ function M.train(samples, gt, model, batch_size, epochs, learning_rate, model_in
     local batches = shuffled:view(size_batches)
     -- output is a 2D normal so the dimension is 2:
     local gt_batches
-    if model_ind == 2 then
+    if method == 'cl' then
       gt_batches = gt_shuffled:view(size_batches)
     else
       gt_batches = gt_shuffled:view(bn, batch_size, 2)
@@ -276,7 +276,7 @@ end
 
 
 
-function M.evaluate(samples, model, batch_size, model_ind)
+function M.evaluate(samples, model, batch_size, method)
 
   local n = samples:size(1)
 
@@ -287,7 +287,7 @@ function M.evaluate(samples, model, batch_size, model_ind)
   local ind_end = batch_size
   
   local outputs = nil
-  if model_ind == 2 then
+  if method == 'cl' then
     outputs = torch.FloatTensor(n, samples:size(3) * samples:size(4))
   else
     outputs = torch.FloatTensor(n, 2)

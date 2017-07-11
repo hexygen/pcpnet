@@ -24,13 +24,14 @@ local shape_path = 'data/shapes/'
 
 -- \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ \/ --
 -- Change model id to train a different network:
-local model_ids = {"re3", "re4"}
+local model_ids = {"cl1", "cln1"}
 -- /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\ /\  --
 
 -- Allow training several networks one after another on a lunch break:
 for i,model_id in ipairs(model_ids) do
   
-  local params = model_list[model_id]["parameters"]
+  local model = model_list[model_id]
+  local params = model["parameters"]
 
   -- Parameters are taken from the model list. 
   -- To change training parameters add a new model to the list.
@@ -43,7 +44,7 @@ for i,model_id in ipairs(model_ids) do
   local train_ratio = params["train_ratio"]
   local learning_rate = params["learning_rate"]
 
-  local shapes = model_list[model_id]["shapes"]
+  local shapes = model["shapes"]
 
   local out_path = base_path .. 'data/out/' .. model_id .. '/'
   if not lfs.attributes(out_path) then
@@ -160,7 +161,7 @@ for i,model_id in ipairs(model_ids) do
   hough = hough:reshape(hough:size(1), 1, hist_size, hist_size)
 
   -- Transform 3D ground truth normals to deep net 2D normals using PCAs:
-  if model_ind == 2 then
+  if model['method'] == 'cl' then
       gt = Hough.preprocess_normals2(gt_normals, pcas, hist_size)
   else
       gt = Hough.preprocess_normals(gt_normals, pcas)
@@ -192,11 +193,11 @@ for i,model_id in ipairs(model_ids) do
   ---- Initialize model of deep net:
   sys.tic()
 
-  local model = nil
-  if model_list[model_id]["method"] == "cl" then
-      model = hnet.getModel2()
+  local net = nil
+  if model['method'] == 'cl' then
+      net = hnet.getModel2()
   else
-      model = hnet.getModel()
+      net = hnet.getModel()
   end
 
   print('Initialized model in ' .. sys.toc() .. ' seconds.')
@@ -204,13 +205,13 @@ for i,model_id in ipairs(model_ids) do
   ------------------------------------------------------------------------
   ---- Train deep net:
   sys.tic()
-  model = hnet.train(hough_train, gt_train, model, batch_size, epochs, learning_rate, model_ind)
+  net = hnet.train(hough_train, gt_train, net, batch_size, epochs, learning_rate, model['method'])
 
   print('Trained model in ' .. sys.toc() .. ' seconds.')
   sys.tic()
 
   -- save current net:
-  torch.save(model_filename, model)
+  torch.save(model_filename, net)
 
   print('Saved model in ' .. sys.toc() .. ' seconds.')
 
