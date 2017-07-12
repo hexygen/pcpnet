@@ -45,7 +45,7 @@ end
 -- Shapes to run - change this to evaluate specific shapes:
 local run_shapes = {'c','f','b','a','d','h','cn','fn','bn','an','dn','hn'}
 -- Model to run - change this to evaluate on different models:
-local run_models = {model_list['re3'], model_list['re4']}
+local run_models = {model_list['cl1'], model_list['cln1']}
 -- Optional: Prediction method with a given model (leave empty if there is only one prediction method)
 local pred_method = '';
 ------------------------------------------------------------------
@@ -135,7 +135,7 @@ for x, model in ipairs(run_models) do
       sys.tic()
 
       local mean = torch.load(mean_filename):float()
-      local model = torch.load(model_filename)
+      local net = torch.load(model_filename)
 
       print('Loaded model in ' .. sys.toc() .. ' seconds.')
 
@@ -161,7 +161,7 @@ for x, model in ipairs(run_models) do
 
       ------------------------------------------------------------------------
       ---- Evaluate deep net:
-      normals = hnet.evaluate(hough, model, batch_size, model['method'])
+      normals = hnet.evaluate(hough, net, batch_size, model['method'])
     end
 
     -- Transform 2D output of deep net to 3D normals:
